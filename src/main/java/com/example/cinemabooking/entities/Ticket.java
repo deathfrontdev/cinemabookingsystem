@@ -29,11 +29,12 @@ public class Ticket {
     private Date bookedAt;
 
     @ManyToOne
-    @JoinColumn
+    @JoinColumn(name = "show_id") // 🔧 это важно!
     private Show show;
 
     @ManyToOne
-    @JoinColumn
+    @JoinColumn(name = "user_id")
     private User user;
+
 
 }

@@ -18,6 +18,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import java.util.List;
+
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
@@ -33,29 +35,48 @@ public class SecurityConfiguration {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        return http.csrf(c -> c.disable())
+        return http
+                .cors(cors -> cors.disable()) // или .disable() если временно
+                .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(req -> req
-                        .requestMatchers(
-                                "/swagger-ui/**",
-                                "/swagger-ui.html",
-                                "/v3/api-docs/**",
-                                "/v3/api-docs.yaml",
-                                "/swagger-resources/**",
-                                "/webjars/**"
-                        ).permitAll()
-                        .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/user/**").permitAll()
-                        .requestMatchers("/movie/**").hasAnyAuthority("ROLE_ADMIN")
-                        .requestMatchers("/show/**").hasAnyAuthority("ROLE_ADMIN")
-                        .requestMatchers("/theater/**").hasAnyAuthority("ROLE_ADMIN")
-                        .requestMatchers("/ticket/**").hasAnyAuthority("ROLE_USER")
-                        .anyRequest().authenticated()
+                        .anyRequest().permitAll()
                 )
-                .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authenticationProvider(authenticationProvider())
-                .addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
+
+
+//    @Bean
+//    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+//        return http
+//                .cors(cors -> cors.configurationSource(request -> {
+//                    var corsConfig = new org.springframework.web.cors.CorsConfiguration();
+//                    corsConfig.setAllowedOrigins(List.of("http://localhost:3000")); // или "*"
+//                    corsConfig.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+//                    corsConfig.setAllowedHeaders(List.of("*"));
+//                    corsConfig.setAllowCredentials(true);
+//                    return corsConfig;
+//                }))
+//                .csrf(csrf -> csrf.disable())
+//                .authorizeHttpRequests(req -> req
+//                        .requestMatchers(
+//                                "/swagger-ui/**", "/swagger-ui.html",
+//                                "/v3/api-docs/**", "/v3/api-docs.yaml",
+//                                "/swagger-resources/**", "/webjars/**"
+//                        ).permitAll()
+//                        .requestMatchers("/auth/**").permitAll()
+//                        .requestMatchers("/user/**").permitAll()
+//                        .requestMatchers("/ws/**").permitAll()
+//                        .requestMatchers("/movie/**").hasAnyAuthority("ROLE_ADMIN")
+//                        .requestMatchers("/show/**").hasAnyAuthority("ROLE_ADMIN")
+//                        .requestMatchers("/theater/**").hasAnyAuthority("ROLE_ADMIN")
+//                        .requestMatchers("/ticket/**").hasAnyAuthority("ROLE_USER")
+//                        .anyRequest().authenticated()
+//                )
+//                .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+//                .authenticationProvider(authenticationProvider())
+//                .addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class)
+//                .build();
+//    }
 
     @Bean
     public AuthenticationProvider authenticationProvider() {

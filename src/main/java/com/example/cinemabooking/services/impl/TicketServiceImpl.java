@@ -15,10 +15,10 @@ import com.example.cinemabooking.request.TicketRequest;
 import com.example.cinemabooking.response.TicketResponse;
 import com.example.cinemabooking.services.TicketService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class TicketServiceImpl implements TicketService {
@@ -32,84 +32,70 @@ public class TicketServiceImpl implements TicketService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
 
     @Override
     public TicketResponse ticketBooking(TicketRequest ticketRequest) {
         Optional<Show> showOpt = showRepository.findById(ticketRequest.getShowId());
-
         if (showOpt.isEmpty()) {
             throw new ShowDoesNotExists();
         }
 
         Optional<User> userOpt = userRepository.findById(ticketRequest.getUserId());
-
         if (userOpt.isEmpty()) {
             throw new UserDoesNotExists();
         }
 
         User user = userOpt.get();
         Show show = showOpt.get();
+        List<String> requestSeats = ticketRequest.getRequestSeats();
 
-        Boolean isSeatAvailable = isSeatAvailable(show.getShowSeatList(), ticketRequest.getRequestSeats());
-
-        if (!isSeatAvailable) {
+        if (!isSeatAvailable(show.getShowSeatList(), requestSeats)) {
             throw new SeatsNotAvailable();
         }
 
-        // count price
-        Integer getPriceAndAssignSeats = getPriceAndAssignSeats(show.getShowSeatList(),	ticketRequest.getRequestSeats());
-
-        String seats = listToString(ticketRequest.getRequestSeats());
+        int totalPrice = assignSeatsAndCalculatePrice(show.getShowSeatList(), requestSeats);
+        String bookedSeatsString = String.join(",", requestSeats);
 
         Ticket ticket = new Ticket();
-        ticket.setTotalTicketsPrice(getPriceAndAssignSeats);
-        ticket.setBookedSeats(seats);
+        ticket.setTotalTicketsPrice(totalPrice);
+        ticket.setBookedSeats(bookedSeatsString);
         ticket.setUser(user);
         ticket.setShow(show);
 
         ticket = ticketRepository.save(ticket);
-
         user.getTicketList().add(ticket);
         show.getTicketList().add(ticket);
         userRepository.save(user);
         showRepository.save(show);
 
+        // WebSocket оповещение об обновлении мест
+        Map<String, Object> seatUpdatePayload = new HashMap<>();
+        seatUpdatePayload.put("showId", show.getShowId());
+        seatUpdatePayload.put("bookedSeats", requestSeats);
+        messagingTemplate.convertAndSend("/topic/seats/" + show.getShowId(), seatUpdatePayload);
+
         return TicketConvertor.returnTicket(show, ticket);
     }
 
-    private Boolean isSeatAvailable(List<ShowSeat> showSeatList, List<String> requestSeats) {
+    private boolean isSeatAvailable(List<ShowSeat> showSeatList, List<String> requestSeats) {
         for (ShowSeat showSeat : showSeatList) {
-            String seatNo = showSeat.getSeatNo();
-
-            if (requestSeats.contains(seatNo) && !showSeat.getIsAvailable()) {
+            if (requestSeats.contains(showSeat.getSeatNo()) && !showSeat.getIsAvailable()) {
                 return false;
             }
         }
-
         return true;
     }
 
-    private Integer getPriceAndAssignSeats(List<ShowSeat> showSeatList, List<String> requestSeats) {
-        Integer totalAmount = 0;
-
+    private int assignSeatsAndCalculatePrice(List<ShowSeat> showSeatList, List<String> requestSeats) {
+        int totalPrice = 0;
         for (ShowSeat showSeat : showSeatList) {
             if (requestSeats.contains(showSeat.getSeatNo())) {
-                totalAmount += showSeat.getPrice();
-                showSeat.setIsAvailable(Boolean.FALSE);
+                showSeat.setIsAvailable(false);
+                totalPrice += showSeat.getPrice();
             }
         }
-
-        return totalAmount;
+        return totalPrice;
     }
-
-    private String listToString(List<String> requestSeats) {
-        StringBuilder sb = new StringBuilder();
-
-        for (String s : requestSeats) {
-            sb.append(s).append(",");
-        }
-
-        return sb.toString();
-    }
-
 }
