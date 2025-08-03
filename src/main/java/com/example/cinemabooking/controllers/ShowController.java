@@ -20,7 +20,7 @@ public class ShowController {
     private ShowService showService;
 
     @Operation(summary = "Добавить новый киносеанс", description = "Создаёт новый киносеанс с местами на основе TheaterSeat")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PostMapping("/addNew")
     public ResponseEntity<String> addShow(@Valid @RequestBody ShowRequest showRequest) {
         try {

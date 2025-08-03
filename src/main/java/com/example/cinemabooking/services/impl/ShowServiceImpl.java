@@ -11,6 +11,7 @@ import com.example.cinemabooking.repositories.ShowRepository;
 import com.example.cinemabooking.repositories.TheaterRepository;
 import com.example.cinemabooking.request.ShowRequest;
 import com.example.cinemabooking.request.ShowSeatRequest;
+import com.example.cinemabooking.response.ShowResponse;
 import com.example.cinemabooking.services.ShowService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -79,5 +80,24 @@ public class ShowServiceImpl implements ShowService {
         showRepository.save(show); // Сохраняем всё вместе
 
         return "Show and its seats have been added successfully";
+    }
+    @Override
+    public List<ShowResponse> getShowsByMovieId(Integer movieId) {
+        Optional<Movie> movieOpt = movieRepository.findById(movieId);
+        if (movieOpt.isEmpty()) {
+            throw new MovieDoesNotExists();
+        }
+
+        Movie movie = movieOpt.get();
+        List<Show> showList = movie.getShows();
+
+        return showList.stream().map(show -> ShowResponse.builder()
+                .showId(show.getShowId())
+                .date(show.getDate())
+                .time(show.getTime())
+                .theaterName(show.getTheater().getName())
+                .movieTitle(movie.getMovieName())
+                .build()
+        ).toList();
     }
 }

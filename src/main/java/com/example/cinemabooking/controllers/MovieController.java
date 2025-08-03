@@ -1,8 +1,11 @@
 package com.example.cinemabooking.controllers;
 
+import com.example.cinemabooking.entities.Show;
 import com.example.cinemabooking.request.MovieRequest;
 import com.example.cinemabooking.response.MovieResponse;
+import com.example.cinemabooking.response.ShowResponse;
 import com.example.cinemabooking.services.MovieService;
+import com.example.cinemabooking.services.ShowService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +18,7 @@ import java.util.List;
 public class MovieController {
 
     private final MovieService movieService;
+    private final ShowService showService;
 
     @PostMapping
     public ResponseEntity<MovieResponse> addMovie(@RequestBody MovieRequest movieRequest) {
@@ -46,4 +50,13 @@ public class MovieController {
         MovieResponse movieResponse = movieService.getMovieById(id);
         return ResponseEntity.ok(movieResponse);
     }
+
+    // MovieController.java
+
+    @GetMapping("/{id}/shows")
+    public ResponseEntity<List<ShowResponse>> getShowsByMovieId(@PathVariable Integer id) {
+        List<ShowResponse> shows = showService.getShowsByMovieId(id);
+        return ResponseEntity.ok(shows);
+    }
+
 }
