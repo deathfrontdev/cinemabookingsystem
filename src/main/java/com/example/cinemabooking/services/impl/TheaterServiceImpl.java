@@ -65,7 +65,7 @@ public class TheaterServiceImpl implements TheaterService {
 
             TheaterSeat theaterSeat = new TheaterSeat();
             theaterSeat.setSeatNo(seatNo);
-            theaterSeat.setSeatType(SeatType.CLASSIC);
+            theaterSeat.setSeatType(SeatType.STANDARD);
             theaterSeat.setTheater(theater);
             seatList.add(theaterSeat);
         }

@@ -5,8 +5,5 @@ import com.example.cinemabooking.request.ShowRequest;
 import com.example.cinemabooking.request.ShowSeatRequest;
 
 public interface ShowService {
-
     String addShow(ShowRequest showRequest);
-
-    String associateShowSeats(ShowSeatRequest showSeatRequest) throws ShowDoesNotExists;
 }

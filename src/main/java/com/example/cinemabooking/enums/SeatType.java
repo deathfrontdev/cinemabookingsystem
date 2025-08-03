@@ -1,6 +1,6 @@
 package com.example.cinemabooking.enums;
 
 public enum SeatType {
-    CLASSIC,
+    STANDARD,
     PREMIUM
 }

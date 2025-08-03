@@ -35,68 +35,49 @@ public class ShowServiceImpl implements ShowService {
         Show show = ShowConvertor.showDtoToShow(showRequest);
 
         Optional<Movie> movieOpt = movieRepository.findById(showRequest.getMovieId());
-
-        if (movieOpt.isEmpty()) {
-            throw new MovieDoesNotExists();
-        }
+        if (movieOpt.isEmpty()) throw new MovieDoesNotExists();
 
         Optional<Theater> theaterOpt = theaterRepository.findById(showRequest.getTheaterId());
+        if (theaterOpt.isEmpty()) throw new TheaterDoesNotExists();
 
-        if (theaterOpt.isEmpty()) {
-            throw new TheaterDoesNotExists();
-        }
-
-        Theater theater = theaterOpt.get();
         Movie movie = movieOpt.get();
+        Theater theater = theaterOpt.get();
 
         show.setMovie(movie);
         show.setTheater(theater);
+
+        // Сохраняем show
         show = showRepository.save(show);
 
+        // Привязываем show к movie и theater
         movie.getShows().add(show);
         theater.getShowList().add(show);
 
         movieRepository.save(movie);
         theaterRepository.save(theater);
 
-        return "Show has been added Successfully";
-    }
-
-    @Override
-    public String associateShowSeats(ShowSeatRequest showSeatRequest) throws ShowDoesNotExists {
-        Optional<Show> showOpt = showRepository.findById(showSeatRequest.getShowId());
-
-        if (showOpt.isEmpty()) {
-            throw new ShowDoesNotExists();
-        }
-
-        Show show = showOpt.get();
-        Theater theater = show.getTheater();
-
+        // 💡 Создаём ShowSeat для каждого TheaterSeat
         List<TheaterSeat> theaterSeatList = theater.getTheaterSeatList();
-
-        List<ShowSeat> showSeatList = show.getShowSeatList();
-
         for (TheaterSeat theaterSeat : theaterSeatList) {
             ShowSeat showSeat = new ShowSeat();
             showSeat.setSeatNo(theaterSeat.getSeatNo());
             showSeat.setSeatType(theaterSeat.getSeatType());
+            showSeat.setShow(show);
+            showSeat.setIsAvailable(true);
+            showSeat.setIsFoodContains(false);
 
-            if (showSeat.getSeatType().equals(SeatType.CLASSIC)) {
-                showSeat.setPrice((showSeatRequest.getPriceOfClassicSeat()));
+            // Установка цены в зависимости от типа
+            if (theaterSeat.getSeatType() == SeatType.STANDARD) {
+                showSeat.setPrice(2000); // можно вынести в переменные
             } else {
-                showSeat.setPrice(showSeatRequest.getPriceOfPremiumSeat());
+                showSeat.setPrice(4000);
             }
 
-            showSeat.setShow(show);
-            showSeat.setIsAvailable(Boolean.TRUE);
-            showSeat.setIsFoodContains(Boolean.FALSE);
-
-            showSeatList.add(showSeat);
+            show.getShowSeatList().add(showSeat);
         }
 
-        showRepository.save(show);
+        showRepository.save(show); // Сохраняем всё вместе
 
-        return "Show seats have been associated successfully";
+        return "Show and its seats have been added successfully";
     }
 }
