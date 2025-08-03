@@ -16,21 +16,18 @@ public class MovieController {
 
     private final MovieService movieService;
 
-    // Добавить фильм
     @PostMapping
     public ResponseEntity<MovieResponse> addMovie(@RequestBody MovieRequest movieRequest) {
         MovieResponse createdMovie = movieService.addMovie(movieRequest);
         return ResponseEntity.ok(createdMovie);
     }
 
-    // Получить все фильмы
     @GetMapping
     public ResponseEntity<List<MovieResponse>> getAllMovies() {
         List<MovieResponse> movies = movieService.getAllMovies();
         return ResponseEntity.ok(movies);
     }
 
-    // Обновить фильм
     @PutMapping("/{id}")
     public ResponseEntity<MovieResponse> updateMovie(@PathVariable Integer id,
                                                      @RequestBody MovieRequest movieRequest) {
@@ -38,14 +35,12 @@ public class MovieController {
         return ResponseEntity.ok(updatedMovie);
     }
 
-    // Удалить фильм
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteMovie(@PathVariable Integer id) {
         movieService.deleteMovie(id);
         return ResponseEntity.noContent().build();
     }
 
-    // Получить фильм по ID
     @GetMapping("/{id}")
     public ResponseEntity<MovieResponse> getMovieById(@PathVariable Integer id) {
         MovieResponse movieResponse = movieService.getMovieById(id);
